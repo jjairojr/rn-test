@@ -1,13 +1,40 @@
-import React, {memo} from 'react';
-import {TouchableOpacity, View, Image, StyleSheet, Text} from 'react-native';
-import {Game} from '../../../../../domain/types';
+import React, { memo, useState, useCallback, useEffect } from 'react';
+import { TouchableOpacity, View, Image, StyleSheet, Text } from 'react-native';
+import { Game } from '../../../../../domain/types';
+import { currency } from '../../../../../utils';
 
 type Props = {
   game: Game;
   onPress?(game: Game): void;
 };
 
+interface GameValueInterface {
+  price: number;
+  discount: number;
+  total: string;
+}
+
 const Card = ({game, onPress}: Props) => {
+  const [gameValue, setGameValue] = useState<GameValueInterface>({} as GameValueInterface);
+
+  useEffect(() => {
+    handlePrice();
+  }, [game])
+
+  const handlePrice = useCallback(() => {
+    let total;
+    const price = game.price.price;
+    const discount = game.price.discount && game.price.discount < 0 ? 0 : game.price.discount || 0;
+
+    if(price - discount > 0) {
+      total = currency(price - discount);
+    } else {
+      total = "Grátis";
+    }
+
+    setGameValue({price, discount, total})
+  }, [game]);
+
   return (
     <View testID="card" style={styles.container}>
       <TouchableOpacity
@@ -24,11 +51,12 @@ const Card = ({game, onPress}: Props) => {
           <Text testID="card-title" style={styles.title}>
             {game.title}
           </Text>
-          <Text testID="card-discount" style={styles.discount}>
-            de R$ 100,00
-          </Text>
+          {gameValue.discount > 0 &&
+           <Text testID="card-discount" style={styles.discount}>
+            {`de ${currency(gameValue.price)}`}
+           </Text>}
           <Text testID="card-total" style={styles.total}>
-            R$ 90,00
+            {gameValue.total}
           </Text>
         </View>
       </TouchableOpacity>
